@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract CryptoCommunityPlatform is Ownable {
+    struct User {
+        uint256 userId;
+        string username;
+        string bio;
+    }
+
+    struct Post {
+        uint256 postId;
+        address author;
+        string content;
+    }
+
+    uint256 private nextUserId = 1;
+    uint256 private nextPostId = 1;
+
+    mapping(address => User) private users;
+    mapping(uint256 => Post) private posts;
+
+    event UserRegistered(address indexed userAddress, uint256 userId, string username);
+    event PostCreated(uint256 indexed postId, address indexed author, string content);
+
+    function registerUser(string memory username, string memory bio) external {
+        require(bytes(username).length > 0, "Username cannot be empty");
+        require(bytes(bio).length <= 256, "Bio length exceeds limit");
+
+        users[msg.sender] = User(nextUserId, username, bio);
+        emit UserRegistered(msg.sender, nextUserId, username);
+
+        nextUserId++;
+    }
+
+    function createPost(string memory content) external {
+        require(bytes(content).length > 0, "Content cannot be empty");
+
+        posts[nextPostId] = Post(nextPostId, msg.sender, content);
+        emit PostCreated(nextPostId, msg.sender, content);
+
+        nextPostId++;
+    }
+
+    function getUser(address userAddress) external view returns (uint256 userId, string memory username, string memory bio) {
+        User storage user = users[userAddress];
+        return (user.userId, user.username, user.bio);
+    }
+
+    function getPost(uint256 postId) external view returns (address author, string memory content) {
+        Post storage post = posts[postId];
+        return (post.author, post.content);
+    }
+}
